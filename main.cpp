@@ -12,7 +12,7 @@ AnalogIn speedPot(p16);
 float speed_val = 0;
 float speed_reading = 0;
 float speed_reading_ms = 0;
-float speed_reading_kmh = 0;
+float speed_reading_mph = 0;
 DigitalIn ignition(p21);
 DigitalIn regen(p22);
 DigitalIn rev(p23);
@@ -21,7 +21,7 @@ DigitalIn accel(p25);
 float maxBusCurrent = 1.0;
 float actualSpeedms = 0;
 float actualSpeedrpm = 0;
-float actualSpeedkmh = 0;
+float actualSpeedmph = 0;
 
 I2C i2c(p28,p27);
 Adafruit_LEDBackpack display(&i2c);
@@ -37,7 +37,7 @@ CAN can1(p30, p29);
 const uint16_t SIGNAL_ID = 0x501;
 const uint16_t BUS_ID = 0x502;
 const uint16_t TRITIUM_ID = 0x603;
-const uint8_t DISPLAY_ADDR = 0x70; 
+const uint8_t DISPLAY_ADDR = 0x70;
 char counter = 0;
 uint8_t dig1 = 0;
 uint8_t dig2 = 0;
@@ -75,16 +75,16 @@ void onCanReceived()
     //printMsg(msgReceived);
     //wait(1);
     if (msgReceived.id == TRITIUM_ID) {
-        // extract data from the received CAN message 
+        // extract data from the received CAN message
         // in the same order as it was added on the transmitter side
-           
+
 //        pc.printf("  counter = %d\r\n", counter);
 //        pc.printf("  voltage = %e V\r\n", voltage);
         debug3 = !debug3;
         //printMsg(msgReceived);
         msgReceived >> actualSpeedrpm;
         //pc.printf("speed in m/s %f\r\n", actualSpeedms);
-        msgReceived >> actualSpeedms; 
+        msgReceived >> actualSpeedms;
     }
     //timer.start(); // to transmit next message in main
 }
@@ -137,17 +137,17 @@ void displayNumber(uint8_t number, bool position)
             dig2 = number - n;
         }
     }
-    
+
     if (number > 99)
     {dig1 = 0;
     dig2 = 0;}
 
-    if (position) 
+    if (position)
     {
         displayDigit(dig1, 3);
         displayDigit(dig2, 4);
-    } 
-    else if (!position) 
+    }
+    else if (!position)
     {
         displayDigit(dig1, 0);
         displayDigit(dig2, 1);
@@ -163,7 +163,7 @@ void setDriverControls()
     driverControls.id = SIGNAL_ID;
     driverControls << speed_val;
     driverControls << curr_val;
-    
+
     busCurrent.clear();
     busCurrent.id = BUS_ID;
     busCurrent << 0;
@@ -182,10 +182,10 @@ void sendCAN()
     else
     {
         //wait(0.5);
-        
-        
+
+
     }
-    
+
     if(can1.write(busCurrent))
     {
         debug2 = !debug2;
@@ -193,15 +193,15 @@ void sendCAN()
     else
     {
         //wait(0.5);
-        
+
     }
 }
 
 void dispSpeed()
 {
-    actualSpeedkmh = abs(actualSpeedms) * 3.6;
-    displayNumber( (uint8_t) actualSpeedkmh , 1);
-    displayNumber( (uint8_t) speed_reading_kmh , 0);
+    actualSpeedmph = abs(actualSpeedms) * 2.23694;
+    displayNumber( (uint8_t) actualSpeedmph , 1);
+    displayNumber( (uint8_t) speed_reading_mph , 0);
 }
 
 int main()
@@ -211,7 +211,7 @@ int main()
     can1.frequency(1000000);
     ticker.attach(&sendCAN, 0.1);
     ticker2.attach(&dispSpeed, 0.5);
-    can1.attach(&onCanReceived); 
+    can1.attach(&onCanReceived);
     ignition.mode(PullUp);
     regen.mode(PullUp);
     rev.mode(PullUp);
@@ -219,42 +219,42 @@ int main()
     accel.mode(PullUp);
     display.begin(DISPLAY_ADDR);
     display.setBrightness(10);
-    
+
     //pc.printf("-------------------------------------\r\n");
     //printf("Attempting to send a CAN message\n");
     //printf("Current and Speed: %f and %f\n", currentPot.read(), speedPot.read());
     //pc.printf("-------------------------------------\r\n");
-    
+
     while(1) {
-        
+
         //curr_val = 0.2;
         //speed_val = 5.0;
-        
+
         curr_reading = currentPot.read();
         speed_reading = speedPot.read();
         speed_reading_ms = speed_reading * 30;
-        speed_reading_kmh = speed_reading_ms*3.6;
-        
+        speed_reading_mph = speed_reading_ms*2.23694;
+
         //displayNumber(1,1);
         //displayNumber(1,0);
 
-        
+
         bool ignition_reading = ignition.read();
         bool regen_reading = regen.read();
         bool rev_reading = rev.read();
         bool brake_reading = brake.read();
         bool accel_reading = accel.read();
-        
+
         //pc.printf("Current reading: %f\r\n", curr_reading);
         //pc.printf("Speed reading: %f\r\n", speed_reading);
         //pc.printf("Ignition reading: %d\r\n", ignition_reading);
         //pc.printf("Regen reading: %d\r\n", regen_reading);
         //pc.printf("Forward/reverse reading: %d\r\n", rev_reading);
         //pc.printf("Brake reading: %d\r\n", brake_reading);
-        
+
         //pc.printf("Accelerator reading: %d\r\n\r\n", accel_reading);
         //wait(2);
-        
+
         if (ignition)
         {
             curr_val = 0;
@@ -282,7 +282,7 @@ int main()
                 {
                     speed_val = speed_reading_ms;
                 }
-                
+
                 if (!accel)
                 {
                     curr_val = curr_reading;
@@ -292,7 +292,7 @@ int main()
                     curr_val = 0;
                 }
              }
-            
+
         }
         //pc.printf("speed_val: %f\r\n", speed_val);
         //pc.printf("curr_val: %f\r\n\r\n", curr_val);
